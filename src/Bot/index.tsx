@@ -1,7 +1,8 @@
 import { Telegraf } from 'telegraf';
+import { makeCall, getCallStatus, isReady } from '../Services/TwilioService';
+import { config } from '../../config';
 
-
-const BOT_TOKEN = "8336245975:AAEoM8byQhs2I5xAyKJh_HwnSN3SlI04R9k"
+const BOT_TOKEN = config.bot.token;
 
 if (!BOT_TOKEN) {
     throw new Error("BOT_TOKEN is not defined");
@@ -27,7 +28,7 @@ bot.command('schedule', (ctx) => {
 // Helper function to validate phone number
 function isValidPhoneNumber(phone: string): boolean {
     // Remove any spaces, hyphens, or parentheses
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const cleanPhone = phone.replace(/[\s\-()]/g, '');
     // Check if it's a valid phone number (8-15 digits, optionally starting with +)
     const phoneRegex = /^(\+?\d{8,15})$/;
     return phoneRegex.test(cleanPhone);
@@ -99,16 +100,103 @@ bot.on('message', (ctx) => {
     // Get user details from Telegram
     const userName = ctx.message.from.first_name + (ctx.message.from.last_name ? ' ' + ctx.message.from.last_name : '');
 
+    // Send initial confirmation
     ctx.reply(`✅ Meeting Request Received!\n\n` +
         `👤 Requester: ${userName}\n` +
         `📞 Contact: ${contactNumber}\n` +
         `🤝 Meeting with: ${personName}\n` +
         `📋 Reason: ${meetingReason}\n\n` +
-        `🤖 Next step: AI will process this request and handle the scheduling conversation.`
+        `📞 Initiating call to ${contactNumber}...`
     );
+
+    // Automatically call the provided number
+    initiateCall(ctx, contactNumber, personName, meetingReason, userName);
 })
 
+// Function to initiate call using Twilio
+async function initiateCall(ctx: any, contactNumber: string, personName: string, meetingReason: string, requesterName: string) {
+    try {
+        // Check if Twilio service is configured
+        if (!isReady()) {
+            ctx.reply(`⚠️ Twilio service not configured. Please set up your Twilio credentials.\n\n` +
+                `📋 Meeting details saved:\n` +
+                `📞 Contact: ${contactNumber}\n` +
+                `🤝 Meeting with: ${personName}\n` +
+                `📋 Reason: ${meetingReason}`);
+            return;
+        }
 
+        // Create personalized message for the call
+        const callMessage = `Hello ${personName}! This is an automated call from Meeting Schedule AI. ` +
+            `${requesterName} has requested to schedule a meeting with you for ${meetingReason}. ` +
+            `Please confirm your availability. Thank you!`;
+
+        // Make the call
+        const callResult = await makeCall({
+            to: contactNumber,
+            message: callMessage,
+            timeout: 30,
+            record: false
+        });
+
+        if (callResult.success) {
+            console.log(`🎉 Call initiated successfully!\n\n` +
+                `📞 Calling ${personName} at ${contactNumber}\n` +
+                `🆔 Call ID: ${callResult.callSid}\n` +
+                `📊 Status: ${callResult.status}\n\n` +
+                `The recipient will receive an automated call with meeting details.`);
+            
+            // You can add call status tracking here
+            trackCallStatus(ctx, callResult.callSid!, contactNumber, personName);
+        } else {
+            ctx.reply(`❌ Failed to initiate call to ${contactNumber}\n\n` +
+                `Error: ${callResult.error}\n\n` +
+                `📋 Meeting details saved for manual follow-up:\n` +
+                `📞 Contact: ${contactNumber}\n` +
+                `🤝 Meeting with: ${personName}\n` +
+                `📋 Reason: ${meetingReason}`);
+        }
+    } catch (error) {
+        console.error('Error in initiateCall:', error);
+    }
+}
+
+// Function to track call status (optional enhancement)
+async function trackCallStatus(ctx: any, callSid: string, contactNumber: string, personName: string) {
+    try {
+        // Wait a few seconds before checking status
+        setTimeout(async () => {
+            const status = await getCallStatus(callSid);
+            
+            let statusMessage = '';
+            switch (status.status) {
+                case 'completed':
+                    statusMessage = `✅ Call to ${personName} (${contactNumber}) completed successfully!`;
+                    if (status.duration) {
+                        statusMessage += `\n⏱️ Duration: ${status.duration} seconds`;
+                    }
+                    break;
+                case 'busy':
+                    statusMessage = `📞 ${personName}'s phone was busy. You may want to try again later.`;
+                    break;
+                case 'no-answer':
+                    statusMessage = `📞 No answer from ${personName}. The call will be retried automatically.`;
+                    break;
+                case 'failed':
+                    statusMessage = `❌ Call to ${personName} failed. Please check the phone number and try again.`;
+                    break;
+                case 'canceled':
+                    statusMessage = `🚫 Call to ${personName} was canceled.`;
+                    break;
+                default:
+                    statusMessage = `📞 Call status update: ${status.status}`;
+            }
+            console.log(`📊 Call Status Update\n\n${statusMessage}`);
+        }, 10000); // Check status after 10 seconds
+    } catch (error) {
+        console.error('Error tracking call status:', error);
+    }
+}
 
 export default bot;
 
