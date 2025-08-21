@@ -1,6 +1,13 @@
-// Import and start the Telegram bot
+// Import and start both the Telegram bot and Voice AI server
 
 import { startBot } from './src/Bot/index';
+import './src/server'; // This will start the voice server
 
-console.log('Starting Meeting Schedule AI Bot...');
+console.log('Starting Meeting Schedule AI Bot and Voice Server...');
+
+// Start the Telegram bot
 startBot();
+
+console.log('✅ Both services started successfully!');
+console.log('🤖 Telegram Bot: Running');
+console.log('📞 Voice AI Server: Running on port 8080');

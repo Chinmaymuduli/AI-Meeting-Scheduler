@@ -1,96 +1,159 @@
-# Meeting Schedule AI Bot - Twilio Integration Demo
+# Meeting Schedule AI - Demo Script
 
-## How It Works
+This demo shows how to test the complete voice call flow system using Deepgram for AI processing.
 
-Your Telegram bot now automatically calls users when it receives a phone number in a meeting request.
+## Prerequisites
 
-### Example Flow:
+1. Ensure the server is running: `npm start`
+2. Have your environment variables configured (especially `DEEPGRAM_API_KEY`)
+3. Have a Twilio account with a phone number
+4. Have a Deepgram account with API access
 
-1. **User sends message to bot:**
+## Demo Steps
 
-   ```
-   +1234567890 John Doe for project discussion
-   ```
+### 1. Health Check
 
-2. **Bot processes the request:**
+First, verify all services are running:
 
-   - ✅ Validates phone number format
-   - ✅ Extracts contact details (name, reason)
-   - ✅ Sends confirmation message
-   - 📞 **Automatically initiates Twilio call**
+```bash
+curl http://localhost:8080/health
+```
 
-3. **Recipient receives call:**
+Expected response:
 
-   - Phone rings at +1234567890
-   - Automated message plays:
-     > "Hello John Doe! This is an automated call from Meeting Schedule AI. [Requester Name] has requested to schedule a meeting with you for project discussion. Please confirm your availability. Thank you!"
+```json
+{
+  "status": "healthy",
+  "services": {
+    "twilio": true,
+    "deepgram": true,
+    "webhook": true
+  },
+  "activeSessions": 0
+}
+```
 
-4. **Bot provides updates:**
+### 2. Test TwiML Generation
 
-   ```
-   🎉 Call initiated successfully!
+Verify the TwiML is generated correctly:
 
-   📞 Calling John Doe at +1234567890
-   🆔 Call ID: CA123abc456def
-   📊 Status: queued
+```bash
+curl http://localhost:8080/test/twiml
+```
 
-   The recipient will receive an automated call with meeting details.
-   ```
+Expected response: XML with `<Response>`, `<Say>`, and `<Gather>` elements.
 
-5. **Call status tracking:**
+### 3. Simulate Incoming Call
 
-   ```
-   📊 Call Status Update
+Test the voice webhook endpoint:
 
-   ✅ Call to John Doe (+1234567890) completed successfully!
-   ⏱️ Duration: 45 seconds
-   ```
+```bash
+curl -X POST http://localhost:8080/ai-voice/placeholder \
+  -H "Content-Type: application/json" \
+  -d '{
+    "CallSid": "demo_call_001",
+    "From": "+1234567890",
+    "To": "+0987654321"
+  }'
+```
 
-## Key Features Implemented:
+Expected response: XML with AI greeting and speech gathering.
 
-### 🚀 **Instant Call Initiation**
+### 4. Simulate Speech Input
 
-- No manual intervention required
-- Calls are triggered immediately when bot receives phone number
+Test the speech processing with Deepgram:
 
-### 🎯 **Personalized Messages**
+```bash
+curl -X POST http://localhost:8080/webhook/speech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "CallSid": "demo_call_001",
+    "SpeechResult": "I need to schedule a meeting with John tomorrow at 2 PM",
+    "Confidence": 0.95
+  }'
+```
 
-- Dynamic call content with requester name, recipient name, and meeting reason
-- Professional automated voice delivery
+Expected response: XML with Deepgram AI response and redirect.
 
-### 📊 **Real-time Status Updates**
+### 5. Continue Conversation
 
-- Live call progress tracking
-- Detailed status messages (ringing, answered, completed, failed, etc.)
-- Call duration reporting
+Simulate the redirect loop:
 
-### 🛡️ **Robust Error Handling**
+```bash
+curl -X POST http://localhost:8080/ai-voice/placeholder \
+  -H "Content-Type: application/json" \
+  -d '{
+    "CallSid": "demo_call_001",
+    "From": "+1234567890",
+    "To": "+0987654321"
+  }'
+```
 
-- Graceful fallback when Twilio not configured
-- Invalid phone number detection
-- Network error recovery
-- Detailed error reporting
+Expected response: XML with continuation prompt and speech gathering.
 
-### 📱 **Smart Phone Number Handling**
+### 6. Check Session Status
 
-- Automatic E.164 format conversion
-- Support for various input formats
-- International number support
+Verify the session is maintained:
 
-## Setup Status:
+```bash
+curl http://localhost:8080/health
+```
 
-✅ Twilio SDK integrated
-✅ Configuration system ready
-✅ Automatic calling implemented
-✅ Error handling added
-✅ Status tracking enabled
-✅ Build verification completed
+Expected response: `"activeSessions": 1`
 
-## Next Steps:
+## Real Call Flow
 
-1. Set up your Twilio credentials in environment variables
-2. Test with a real phone number
-3. Monitor call logs in Twilio Console
-4. Customize call messages as needed
+In a real call, the flow would be:
 
-Your bot is now ready for production use! 🎉
+1. **User calls Twilio number**
+2. **Twilio sends webhook** to `/ai-voice/placeholder`
+3. **Deepgram AI generates greeting** and plays it
+4. **Twilio gathers speech** using `<Gather>`
+5. **User speaks** → Twilio transcribes
+6. **Transcript sent** to `/webhook/speech`
+7. **Deepgram AI processes** and generates response
+8. **Response played** to user
+9. **Redirect** back to main handler
+10. **Loop continues** until user hangs up
+
+## Deepgram AI Responses
+
+The Deepgram AI will provide contextual responses for:
+
+- **Meeting Scheduling**: "I can help you schedule that meeting. What day and time would work best for you?"
+- **Calendar Management**: "Let me check your calendar availability. What date are you looking for?"
+- **Time Coordination**: "I'd be happy to help you schedule a meeting. What time would work best for you?"
+- **Location Planning**: "Great! Where would you like to have the meeting?"
+- **Confirmation**: "Perfect! I've confirmed that for you. Is there anything else you'd like me to help with?"
+
+## Expected Behavior
+
+- ✅ Deepgram AI generates contextual responses
+- ✅ Conversation history is maintained
+- ✅ Speech recognition works properly
+- ✅ TwiML is correctly formatted
+- ✅ Sessions are properly managed
+- ✅ Error handling works gracefully
+- ✅ Real-time AI processing capabilities
+
+## Troubleshooting
+
+If any step fails:
+
+1. Check server logs for errors
+2. Verify environment variables (especially `DEEPGRAM_API_KEY`)
+3. Test individual endpoints
+4. Check Twilio configuration
+5. Verify Deepgram API key is valid and has sufficient credits
+6. Check Deepgram service status at https://status.deepgram.com
+
+## Deepgram Configuration
+
+The system uses these Deepgram settings:
+
+- **Model**: `nova-2` (latest and most accurate)
+- **Language**: `en-US` (configurable)
+- **Smart Formatting**: Enabled for better readability
+- **Punctuation**: Automatic punctuation
+- **Speaker Diarization**: Identify different speakers
+- **Utterance Detection**: Better sentence boundaries
