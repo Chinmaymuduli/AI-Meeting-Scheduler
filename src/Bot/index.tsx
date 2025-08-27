@@ -18,7 +18,7 @@ bot.start((ctx) => {
   // Reply with a prompt for meeting details that contain userName/contact number and meeting description ( Why you want to schedule meeting?)
   ctx.reply(
     "👋 Hello! I'm your AI Meeting Scheduler.\n\n" +
-      "Click here to schedule a meeting: /schedule \n\n"
+    "Click here to schedule a meeting: /schedule \n\n"
   );
 });
 
@@ -26,8 +26,8 @@ bot.start((ctx) => {
 bot.command("schedule", (ctx) => {
   ctx.reply(
     `Please provide meeting details including contact number, user name and the reason for scheduling the meeting.\n\n` +
-      `Format: [Contact Number] [Name] for [Reason]\n` +
-      `Example: 99XXXXXXXX John Doe for project discussion`
+    `Format: [Contact Number] [Name] for [Reason]\n` +
+    `Example: 99XXXXXXXX John Doe for project discussion`
   );
 });
 
@@ -60,8 +60,8 @@ bot.on("message", (ctx) => {
   if (parts.length < 2) {
     ctx.reply(
       "Please provide meeting details in the correct format:\n\n" +
-        `Format: [Contact Number] [Name] for [Reason]\n` +
-        `Example: 99XXXXXXXX John Doe for project discussion`
+      `Format: [Contact Number] [Name] for [Reason]\n` +
+      `Example: 99XXXXXXXX John Doe for project discussion`
     );
     return;
   }
@@ -74,8 +74,8 @@ bot.on("message", (ctx) => {
   if (contactNameParts.length < 2) {
     ctx.reply(
       "Please include both contact number and name.\n\n" +
-        `Format: [Contact Number] [Name] for [Reason]\n` +
-        `Example: 99XXXXXXXX John Doe for project discussion`
+      `Format: [Contact Number] [Name] for [Reason]\n` +
+      `Example: 99XXXXXXXX John Doe for project discussion`
     );
     return;
   }
@@ -87,9 +87,9 @@ bot.on("message", (ctx) => {
   if (!isValidPhoneNumber(contactNumber)) {
     ctx.reply(
       "❌ Invalid contact number!\n\n" +
-        `Please provide a valid phone number (8-15 digits).\n` +
-        `Format: [Contact Number] [Name] for [Reason]\n` +
-        `Example: 99XXXXXXXX John Doe for project discussion`
+      `Please provide a valid phone number (8-15 digits).\n` +
+      `Format: [Contact Number] [Name] for [Reason]\n` +
+      `Example: 99XXXXXXXX John Doe for project discussion`
     );
     return;
   }
@@ -98,8 +98,8 @@ bot.on("message", (ctx) => {
   if (!personName || personName.trim().length === 0) {
     ctx.reply(
       "❌ Please provide a valid person name!\n\n" +
-        `Format: [Contact Number] [Name] for [Reason]\n` +
-        `Example: 99XXXXXXXX John Doe for project discussion`
+      `Format: [Contact Number] [Name] for [Reason]\n` +
+      `Example: 99XXXXXXXX John Doe for project discussion`
     );
     return;
   }
@@ -108,8 +108,8 @@ bot.on("message", (ctx) => {
   if (!meetingReason || meetingReason.trim().length === 0) {
     ctx.reply(
       "❌ Please provide a valid meeting reason!\n\n" +
-        `Format: [Contact Number] [Name] for [Reason]\n` +
-        `Example: 99XXXXXXXX John Doe for project discussion`
+      `Format: [Contact Number] [Name] for [Reason]\n` +
+      `Example: 99XXXXXXXX John Doe for project discussion`
     );
     return;
   }
@@ -122,11 +122,11 @@ bot.on("message", (ctx) => {
   // Send initial confirmation
   ctx.reply(
     `✅ Meeting Request Received!\n\n` +
-      `👤 Requester: ${userName}\n` +
-      `📞 Contact: ${contactNumber}\n` +
-      `🤝 Meeting with: ${personName}\n` +
-      `📋 Reason: ${meetingReason}\n\n` +
-      `📞 Initiating call to ${contactNumber}...`
+    `👤 Requester: ${userName}\n` +
+    `📞 Contact: ${contactNumber}\n` +
+    `🤝 Meeting with: ${personName}\n` +
+    `📋 Reason: ${meetingReason}\n\n` +
+    `📞 Initiating call to ${contactNumber}...`
   );
 
   // Automatically call the provided number
@@ -146,15 +146,15 @@ async function initiateCall(
     if (!isReady()) {
       ctx.reply(
         `⚠️ Twilio service not configured. Please set up your Twilio credentials.\n\n` +
-          `📋 Meeting details saved:\n` +
-          `📞 Contact: ${contactNumber}\n` +
-          `🤝 Meeting with: ${personName}\n` +
-          `📋 Reason: ${meetingReason}`
+        `📋 Meeting details saved:\n` +
+        `📞 Contact: ${contactNumber}\n` +
+        `🤝 Meeting with: ${personName}\n` +
+        `📋 Reason: ${meetingReason}`
       );
       return;
     }
 
-      const callMessage = `Hello ${personName}! I’m calling on behalf of ${requesterName}.The context is ${meetingReason}.Would you like to schedule a meeting?`;
+    const callMessage = `Hello ${personName}! I’m calling on behalf of ${requesterName}.The context is ${meetingReason}.Would you like to schedule a meeting?`;
 
     // Make the call
     const callResult = await makeCall({
@@ -167,10 +167,10 @@ async function initiateCall(
     if (callResult.success) {
       console.log(
         `🎉 Call initiated successfully!\n\n` +
-          `📞 Calling ${personName} at ${contactNumber}\n` +
-          `🆔 Call ID: ${callResult.callSid}\n` +
-          `📊 Status: ${callResult.status}\n\n` +
-          `The recipient will receive an automated call with meeting details.`
+        `📞 Calling ${personName} at ${contactNumber}\n` +
+        `🆔 Call ID: ${callResult.callSid}\n` +
+        `📊 Status: ${callResult.status}\n\n` +
+        `The recipient will receive an automated call with meeting details.`
       );
 
       // You can add call status tracking here
@@ -178,11 +178,11 @@ async function initiateCall(
     } else {
       ctx.reply(
         `❌ Failed to initiate call to ${contactNumber}\n\n` +
-          `Error: ${callResult.error}\n\n` +
-          `📋 Meeting details saved for manual follow-up:\n` +
-          `📞 Contact: ${contactNumber}\n` +
-          `🤝 Meeting with: ${personName}\n` +
-          `📋 Reason: ${meetingReason}`
+        `Error: ${callResult.error}\n\n` +
+        `📋 Meeting details saved for manual follow-up:\n` +
+        `📞 Contact: ${contactNumber}\n` +
+        `🤝 Meeting with: ${personName}\n` +
+        `📋 Reason: ${meetingReason}`
       );
     }
   } catch (error) {

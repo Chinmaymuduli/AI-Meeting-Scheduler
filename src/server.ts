@@ -81,6 +81,9 @@ app.get('/test/twiml', (req, res) => {
     res.type('text/xml');
     res.send(testTwiml);
 });
+app.get('/google/auth/callback', (req, res) => {
+    res.send('Google OAuth callback endpoint - to be implemented');
+});
 
 // Start server
 const PORT = config.webhook.port;

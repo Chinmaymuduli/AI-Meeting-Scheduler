@@ -7,7 +7,8 @@
     "start": "node dist/index.js",
     "dev": "nodemon --exec ts-node index.ts",
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:google-meet": "node test-google-meet.js"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +16,12 @@
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
     "@google/generative-ai": "^0.21.0",
+    "@types/nodemailer": "^7.0.1",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "googleapis": "^157.0.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^7.0.5",
     "telegraf": "^4.16.3",
     "twilio": "^5.8.0"
   },

@@ -51,6 +51,27 @@ DEEPGRAM_API_KEY=your_deepgram_api_key
 DEEPGRAM_MODEL=nova-2
 DEEPGRAM_LANGUAGE=en-US
 
+# Email Configuration (Choose either SMTP or Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# Or use Gmail directly
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_app_password
+
+# Email addresses
+ADMIN_EMAIL=admin@yourcompany.com
+USER_EMAIL=user@yourcompany.com
+
+# Google API Configuration (for Google Meet integration)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:8080/auth/google/callback
+GOOGLE_REFRESH_TOKEN=your_google_refresh_token
+GOOGLE_CALENDAR_ID=primary
+
 # Server Configuration
 PORT=8080
 BASE_URL=http://localhost:8080
@@ -113,6 +134,10 @@ Configure these webhook URLs in your Twilio console:
 - ✅ Telegram bot integration for call initiation
 - ✅ Session management and cleanup
 - ✅ Real-time audio processing capabilities
+- ✅ **NEW: Intelligent meeting scheduling with date parsing**
+- ✅ **NEW: Automatic email confirmations to users and admins**
+- ✅ **NEW: Meeting management and tracking system**
+- ✅ **NEW: Automatic Google Meet link creation and integration**
 
 ## Architecture
 
@@ -123,6 +148,96 @@ The system consists of several key components:
 3. **TwilioService**: Manages Twilio API interactions
 4. **Express Server**: Provides webhook endpoints and API
 5. **Telegram Bot**: Allows users to initiate calls via chat
+
+## Meeting Scheduling Features
+
+The system now includes an intelligent meeting scheduler that can:
+
+- **Automatic Date Parsing**: Understands various date formats including relative dates (tomorrow, next week), specific dates (15th December), and short formats (15/12)
+- **Email Confirmations**: Sends professional HTML emails to both users and administrators
+- **Meeting Management**: Track all scheduled meetings with unique IDs and status updates
+- **Flexible Input**: Accepts natural language date inputs from users
+- **Google Meet Integration**: Automatically creates Google Meet links for all scheduled meetings
+- **Calendar Sync**: Integrates with Google Calendar for seamless meeting management
+
+### Telegram Bot Commands
+
+- `/schedule` - Schedule a new meeting with date and details
+- `/meetings` - View all scheduled meetings
+
+## Google Meet Integration
+
+The system automatically creates Google Meet links for all scheduled meetings:
+
+- **Automatic Link Generation**: Creates Google Meet links when meetings are scheduled
+- **Calendar Integration**: Syncs with Google Calendar for seamless management
+- **Email Notifications**: Includes Google Meet links in confirmation emails
+- **Meeting Updates**: Automatically updates Google Calendar when meeting details change
+- **Meeting Deletion**: Removes meetings from Google Calendar when cancelled
+
+### Setup Requirements
+
+To enable Google Meet functionality, you need to:
+
+1. **Enable Google Calendar API** in Google Cloud Console
+2. **Create OAuth 2.0 credentials** with calendar permissions
+3. **Generate a refresh token** for API access
+4. **Configure environment variables** with your Google API credentials
+
+See [GOOGLE_API_SETUP.md](./GOOGLE_API_SETUP.md) for detailed setup instructions.
+
+### Meeting Format
+
+```
+[Contact Number] [Name] for [Reason] on [Date]
+```
+
+**Examples:**
+
+- `99XXXXXXXX John Doe for project discussion on tomorrow`
+- `99XXXXXXXX John Doe for project discussion on 15th December`
+- `99XXXXXXXX John Doe for project discussion on 15/12/2024`
+
+### Email Configuration
+
+Configure email settings in your `.env` file:
+
+```bash
+# Choose either SMTP or Gmail configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# Or use Gmail directly
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_app_password
+
+# Email addresses
+ADMIN_EMAIL=admin@yourcompany.com
+USER_EMAIL=user@yourcompany.com
+```
+
+## Google Meet Integration
+
+The system automatically creates Google Meet links for all scheduled meetings:
+
+- **Automatic Link Generation**: Creates Google Meet links when meetings are scheduled
+- **Calendar Integration**: Syncs with Google Calendar for seamless management
+- **Email Notifications**: Includes Google Meet links in confirmation emails
+- **Meeting Updates**: Automatically updates Google Calendar when meeting details change
+- **Meeting Deletion**: Removes meetings from Google Calendar when cancelled
+
+### Setup Requirements
+
+To enable Google Meet functionality, you need to:
+
+1. **Enable Google Calendar API** in Google Cloud Console
+2. **Create OAuth 2.0 credentials** with calendar permissions
+3. **Generate a refresh token** for API access
+4. **Configure environment variables** with your Google API credentials
+
+See [GOOGLE_API_SETUP.md](./GOOGLE_API_SETUP.md) for detailed setup instructions.
 
 ## Deepgram Integration Benefits
 

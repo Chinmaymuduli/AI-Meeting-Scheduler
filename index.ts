@@ -1,7 +1,6 @@
-// Import and start both the Telegram bot and Voice AI server
 
 import { startBot } from './src/Bot/index';
-import './src/server'; // This will start the voice server
+import './src/server';
 
 console.log('Starting Meeting Schedule AI Bot and Voice Server...');
 
