@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { config } from '../../config';
+import * as nodemailer from 'nodemailer';
 
 export interface GoogleMeetDetails {
     meetingLink: string;
@@ -59,6 +60,7 @@ export const createMeetingWithGoogleMeet = async (
     if (!calendarClient?.calendar) {
         throw new Error('Google Calendar service not initialized');
     }
+
 
     const { calendar } = calendarClient;
 
@@ -292,6 +294,182 @@ export const isGoogleCalendarConfigured = (): boolean => {
     );
 };
 
+/**
+ * Send email using Gmail SMTP
+ */
+export const sendGmail = async (
+    to: string,
+    subject: string,
+    htmlContent: string,
+    textContent?: string
+): Promise<void> => {
+    try {
+        // Create Gmail transporter
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: config.email.gmail.user,
+                pass: config.email.gmail.appPassword,
+            },
+        });
+
+        // Email options
+        const mailOptions = {
+            from: config.email.fromEmail,
+            to: to,
+            subject: subject,
+            html: htmlContent,
+            text: textContent || htmlContent.replace(/<[^>]*>/g, ''), // Strip HTML tags for text version
+        };
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info.messageId);
+
+    } catch (error: any) {
+        console.error('Error sending Gmail:', error);
+        throw new Error(`Failed to send Gmail: ${error.message}`);
+    }
+};
+
+/**
+ * Send a test/dummy email to the specified address with Google Meet link
+ */
+export const sendDummyEmail = async (toEmail: string = 'chinmaymuduli0@gmail.com'): Promise<void> => {
+    try {
+        // Create a Google Meet link first
+        console.log('🔗 Creating Google Meet link...');
+        const meetLink = await createGoogleMeetLink();
+        console.log('✅ Google Meet link created:', meetLink);
+
+        const subject = 'Test Email with Google Meet Link from Meeting Scheduler AI';
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">Hello from Meeting Scheduler AI! 🚀</h2>
+                <p>This is a test email sent from your Meeting Scheduler AI application.</p>
+                
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50;">
+                    <h3 style="color: #2e7d32; margin-top: 0;">🎯 Google Meet Link Created!</h3>
+                    <p><strong>Meeting Link:</strong> <a href="${meetLink}" style="color: #1976d2; text-decoration: none; font-weight: bold;">${meetLink}</a></p>
+                    <p style="margin-top: 15px;">
+                        <a href="${meetLink}" style="background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            🚀 Join Meeting
+                        </a>
+                    </p>
+                </div>
+
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>✅ Google Calendar integration</li>
+                    <li>✅ Google Meet creation</li>
+                    <li>✅ Gmail sending capability</li>
+                    <li>✅ Voice call handling</li>
+                    <li>✅ AI-powered scheduling</li>
+                </ul>
+                <p>If you're receiving this email, it means the Gmail integration is working perfectly!</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #666; font-size: 12px;">
+                    Sent on: ${new Date().toLocaleString()}<br>
+                    From: Meeting Scheduler AI System
+                </p>
+            </div>
+        `;
+
+        await sendGmail(toEmail, subject, htmlContent);
+        console.log('📧 Email sent successfully with Google Meet link!');
+
+    } catch (error) {
+        console.error('❌ Error in sendDummyEmail:', error);
+        // Fallback: send email without meet link
+        const subject = 'Test Email from Meeting Scheduler AI (Meet Link Creation Failed)';
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">Hello from Meeting Scheduler AI! 🚀</h2>
+                <p>This is a test email sent from your Meeting Scheduler AI application.</p>
+                <p style="color: #e74c3c;"><strong>Note:</strong> Google Meet link creation failed, but email sending is working.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>✅ Google Calendar integration</li>
+                    <li>✅ Google Meet creation</li>
+                    <li>✅ Gmail sending capability</li>
+                    <li>✅ Voice call handling</li>
+                    <li>✅ AI-powered scheduling</li>
+                </ul>
+                <p>If you're receiving this email, it means the Gmail integration is working perfectly!</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #666; font-size: 12px;">
+                    Sent on: ${new Date().toLocaleString()}<br>
+                    From: Meeting Scheduler AI System
+                </p>
+            </div>
+        `;
+
+        await sendGmail(toEmail, subject, htmlContent);
+    }
+};
+
+/**
+ * Send a meeting email with Google Meet link
+ */
+export const sendMeetingEmailWithMeetLink = async (
+    toEmail: string,
+    meetingDetails: {
+        title: string;
+        date: string;
+        time: string;
+        duration: string;
+        description?: string;
+        attendees?: string[];
+    }
+): Promise<void> => {
+    try {
+        // Create a Google Meet link
+        console.log('🔗 Creating Google Meet link for meeting...');
+        const meetLink = await createGoogleMeetLink();
+        console.log('✅ Google Meet link created:', meetLink);
+
+        const subject = `Meeting Scheduled: ${meetingDetails.title}`;
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #2c3e50;">📅 Meeting Scheduled Successfully!</h2>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #34495e; margin-top: 0;">${meetingDetails.title}</h3>
+                    <p><strong>📅 Date:</strong> ${meetingDetails.date}</p>
+                    <p><strong>⏰ Time:</strong> ${meetingDetails.time}</p>
+                    <p><strong>⏱️ Duration:</strong> ${meetingDetails.duration}</p>
+                    ${meetingDetails.description ? `<p><strong>📝 Description:</strong> ${meetingDetails.description}</p>` : ''}
+                    ${meetingDetails.attendees && meetingDetails.attendees.length > 0 ? `<p><strong>👥 Attendees:</strong> ${meetingDetails.attendees.join(', ')}</p>` : ''}
+                </div>
+
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50;">
+                    <h3 style="color: #2e7d32; margin-top: 0;">🎯 Google Meet Link</h3>
+                    <p><strong>Meeting Link:</strong> <a href="${meetLink}" style="color: #1976d2; text-decoration: none; font-weight: bold;">${meetLink}</a></p>
+                    <p style="margin-top: 15px;">
+                        <a href="${meetLink}" style="background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            🚀 Join Meeting
+                        </a>
+                    </p>
+                </div>
+
+                <p>We look forward to seeing you at the meeting!</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #7f8c8d; font-size: 12px;">
+                    Sent on: ${new Date().toLocaleString()}<br>
+                    From: Meeting Scheduler AI System
+                </p>
+            </div>
+        `;
+
+        await sendGmail(toEmail, subject, htmlContent);
+        console.log('📧 Meeting email sent successfully with Google Meet link!');
+
+    } catch (error: any) {
+        console.error('❌ Error sending meeting email:', error);
+        throw new Error(`Failed to send meeting email: ${error.message}`);
+    }
+};
+
 // For backward compatibility, you can also export a default object with all functions
 export default {
     createMeetingWithGoogleMeet,
@@ -300,4 +478,7 @@ export default {
     deleteMeeting,
     getMeetingDetails,
     isConfigured: isGoogleCalendarConfigured,
+    sendGmail,
+    sendDummyEmail,
+    sendMeetingEmailWithMeetLink,
 };

@@ -71,7 +71,7 @@ export const config = {
             appPassword: process.env.GMAIL_APP_PASSWORD || '',
         },
         // Email addresses
-        fromEmail: process.env.FROM_EMAIL || 'mudulichinmay5@gmail.com',
+        fromEmail: 'noreply@meetingscheduler.com',
         adminEmail: process.env.ADMIN_EMAIL || '',
         userEmail: process.env.USER_EMAIL || '',
     },
@@ -96,4 +96,4 @@ export const validateTwilioConfig = (): boolean => {
 export const validateDeepgramConfig = (): boolean => {
     const { apiKey } = config.deepgram;
     return !!apiKey;
-}; 
+};  

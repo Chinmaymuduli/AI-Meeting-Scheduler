@@ -69,19 +69,19 @@ const formatPhoneNumber = (phoneNumber: string): string | null => {
 /**
  * Create TwiML for voice response
  */
-export const createTwiML = (message: string, additionalActions?: string): string => {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="${config.call.voice}" language="${config.call.language}">${message}</Say>
-  ${additionalActions || ''}
-</Response>`;
-};
-const generateTwiMLUrl = (message: string): string => {
-    // For production, you'd want to host your own TwiML endpoint
-    // For now, we'll use Twilio's hosted TwiML with Say verb
-    const encodedMessage = encodeURIComponent(message);
-    return `http://twimlets.com/message?Message%5B0%5D=${encodedMessage}&Voice=${config.call.voice}`;
-};
+// export const createTwiML = (message: string, additionalActions?: string): string => {
+//     return `<?xml version="1.0" encoding="UTF-8"?>
+// <Response>
+//   <Say voice="${config.call.voice}" language="${config.call.language}">${message}</Say>
+//   ${additionalActions || ''}
+// </Response>`;
+// };
+// const generateTwiMLUrl = (message: string): string => {
+//     // For production, you'd want to host your own TwiML endpoint
+//     // For now, we'll use Twilio's hosted TwiML with Say verb
+//     const encodedMessage = encodeURIComponent(message);
+//     return `http://twimlets.com/message?Message%5B0%5D=${encodedMessage}&Voice=${config.call.voice}`;
+// };
 
 /**
  * Make a call with Twilio
@@ -99,25 +99,47 @@ export const makeCall = async (options: CallOptions): Promise<CallResult> => {
             return { success: false, error: 'Invalid phone number format' };
         }
 
-        const webhookUrl = `${config.webhook.baseUrl}/ai-voice/placeholder`;
         const message = options.message || 'Hello! You have a meeting request. Please stay on the line to speak with our AI assistant.';
 
-        const twimlUrl = generateTwiMLUrl(message);
-        const call = await client.calls.create({
-            to: formattedNumber,
-            from: config.twilio.phoneNumber,
-            url: webhookUrl,
-            timeout: options.timeout || config.call.timeout,
-            record: options.record ?? config.call.record,
-            statusCallback: options.statusCallback,
-            statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-            statusCallbackMethod: 'POST'
-        });
+        let call;
 
-        console.log("Greeting Message:", options.message);
-        // Now store the message with the actual call SID
+        // Store the message first, then create the call
         if (options.message) {
+            // Generate a temporary call SID to store the message
+            const tempCallSid = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            voiceWebhookHandler.setCallMessage(tempCallSid, options.message);
+
+            // Create webhook URL with the message as a parameter
+            const webhookUrl = `${config.webhook.baseUrl}/ai-voice/placeholder?message=${encodeURIComponent(options.message)}&tempSid=${tempCallSid}`;
+
+            call = await client.calls.create({
+                to: formattedNumber,
+                from: config.twilio.phoneNumber,
+                url: webhookUrl,
+                timeout: options.timeout || config.call.timeout,
+                record: options.record ?? config.call.record,
+                statusCallback: options.statusCallback,
+                statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+                statusCallbackMethod: 'POST'
+            });
+
+            // Now store the message with the actual call SID
             voiceWebhookHandler.setCallMessage(call.sid, options.message);
+            // Remove the temporary entry
+            voiceWebhookHandler.removeCallMessage(tempCallSid);
+        } else {
+            const webhookUrl = `${config.webhook.baseUrl}/ai-voice/placeholder`;
+
+            call = await client.calls.create({
+                to: formattedNumber,
+                from: config.twilio.phoneNumber,
+                url: webhookUrl,
+                timeout: options.timeout || config.call.timeout,
+                record: options.record ?? config.call.record,
+                statusCallback: options.statusCallback,
+                statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+                statusCallbackMethod: 'POST'
+            });
         }
         console.log(`✅ Call initiated successfully. SID: ${call.sid}`);
 

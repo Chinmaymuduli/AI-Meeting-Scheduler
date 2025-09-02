@@ -8,7 +8,9 @@
     "dev": "nodemon --exec ts-node index.ts",
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test:google-meet": "node test-google-meet.js"
+    "test:google-meet": "node test-google-meet.js",
+    "test:gmail": "node test-gmail.js",
+    "test:meeting-email": "node test-meeting-email.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +19,7 @@
     "@deepgram/sdk": "^4.11.2",
     "@google/generative-ai": "^0.21.0",
     "@types/nodemailer": "^7.0.1",
+    "cross-fetch": "^4.1.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "googleapis": "^157.0.0",

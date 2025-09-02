@@ -127,11 +127,22 @@ export const handleIncomingCall = async (
 ): Promise<void> => {
     try {
         const { CallSid, From, To } = req.body;
+        const { message: urlMessage, tempSid } = req.query;
+
+        console.log("Req body=======>", req.body)
+        console.log(`🔍 CallSid type: ${typeof CallSid}, value: "${CallSid}"`);
+        console.log(`🔍 CallSid length: ${CallSid?.length}`);
+        console.log(`🔍 URL message: ${urlMessage}`);
+        console.log(`🔍 Temp SID: ${tempSid}`);
+
+        console.log("=======================================================")
 
         console.log(`📞 Incoming call from ${From} to ${To}, SID: ${CallSid}`);
 
         // Check if we have an existing session for this call
         let session = activeSessions.get(CallSid);
+
+        console.log({ "📌📌📌📌📌📌📌📌📌📌📌": session });
 
         if (!session) {
             console.log(`🆕 Creating new session for call ${CallSid}`);
@@ -153,7 +164,28 @@ export const handleIncomingCall = async (
             activeSessions.set(CallSid, session);
 
             // Get the stored message for this call if available
-            const storedMessage = getCallMessage(CallSid);
+            console.log(`🔍 About to get stored message for CallSid: ${CallSid}`);
+            let storedMessage = getCallMessage(CallSid);
+
+            // If no stored message found, try to get it from URL parameters
+            if (!storedMessage && urlMessage) {
+                console.log(`🔍 Using message from URL: ${urlMessage}`);
+                storedMessage = decodeURIComponent(urlMessage as string);
+                // Store it for future use
+                setCallMessage(CallSid, storedMessage);
+            }
+
+            // If still no message and we have a temp SID, try to get it from there
+            if (!storedMessage && tempSid) {
+                console.log(`🔍 Trying to get message from temp SID: ${tempSid}`);
+                storedMessage = getCallMessage(tempSid as string);
+                if (storedMessage) {
+                    // Store it with the actual call SID
+                    setCallMessage(CallSid, storedMessage);
+                    // Remove the temporary entry
+                    removeCallMessage(tempSid as string);
+                }
+            }
 
             console.log({ storedMessage })
 
@@ -331,13 +363,28 @@ export const getDefaultAgentPrompt = (): string => {
 export const setCallMessage = (callSid: string, message: string): void => {
     console.log(`Setting message for call ${callSid}: ${message}`);
     callMessages.set(callSid, message);
+    console.log(`📝 Current callMessages Map size: ${callMessages.size}`);
+    console.log(`📝 All stored call SIDs:`, Array.from(callMessages.keys()));
 };
 
 /**
  * Get message for a specific call
  */
 export const getCallMessage = (callSid: string): string | undefined => {
-    return callMessages.get(callSid);
+    console.log(`🔍 Looking for message for call SID: ${callSid}`);
+    console.log(`🔍 Current callMessages Map size: ${callMessages.size}`);
+    console.log(`🔍 All stored call SIDs:`, Array.from(callMessages.keys()));
+    const message = callMessages.get(callSid);
+    console.log(`🔍 Found message:`, message);
+    return message;
+};
+
+/**
+ * Remove message for a specific call
+ */
+export const removeCallMessage = (callSid: string): void => {
+    console.log(`🗑️ Removing message for call SID: ${callSid}`);
+    callMessages.delete(callSid);
 };
 
 // For backward compatibility, create an object that mimics the original class structure
@@ -354,4 +401,5 @@ export const voiceWebhookHandler = {
     getDefaultAgentPrompt,
     setCallMessage,
     getCallMessage,
+    removeCallMessage,
 };
