@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import { google } from 'googleapis';
 import { config } from '../config';
 import {
@@ -10,7 +11,13 @@ import {
 import { deepgramService } from './Services/DeepgramService';
 import { isReady as isTwilioReady } from './Services/TwilioService';
 
+
 const app = express();
+
+// Create HTTP server for WebSocket support
+const server = createServer(app);
+
+
 
 // Middleware
 app.use(express.json());
@@ -21,6 +28,8 @@ app.get('/health', (req, res) => {
     const services = {
         twilio: isTwilioReady(),
         deepgram: deepgramService.isReady(),
+        // deepgramAgent: deepgramAgentService.isReady(),
+        webSocket: true,
         webhook: true
     };
 
@@ -30,16 +39,10 @@ app.get('/health', (req, res) => {
         status: allReady ? 'healthy' : 'degraded',
         services,
         timestamp: new Date().toISOString(),
-        activeSessions: getActiveSessionsCount()
+        activeSessions: getActiveSessionsCount(),
     });
 });
 
-// Voice AI Call Flow Webhook Endpoints
-// The flow works as follows:
-// 1. Caller speaks → Twilio streams audio → Deepgram transcribes
-// 2. Transcript → Node server → AI generates a text reply
-// 3. Next Twilio <Say> block plays the AI reply to the caller
-// 4. Twilio <Redirect> loops the flow → user can speak again
 
 app.post('/webhook/speech', async (req, res) => {
     await handleSpeechInput(req, res);
@@ -218,11 +221,13 @@ app.listen(PORT, () => {
     console.log(`   - Speech: ${config.webhook.baseUrl}/webhook/speech`);
     console.log(`   - Status: ${config.webhook.baseUrl}/webhook/status`);
     console.log(`🔧 Health check: ${config.webhook.baseUrl}/health`);
+    console.log(`🌐 WebSocket endpoint: ${config.webhook.baseUrl.replace('http', 'ws')}/ws/voice-agent`);
 
     // Check service status
     console.log(`\n📊 Service Status:`);
     console.log(`   - Twilio: ${isTwilioReady() ? '✅ Ready' : '❌ Not configured'}`);
     console.log(`   - Deepgram AI: ${deepgramService.isReady() ? '✅ Ready' : '❌ Not configured'}`);
+    console.log(`   - WebSocket: ✅ Ready`);
 
     if (!isTwilioReady()) {
         console.log(`\n⚠️  To enable Twilio calls, set these environment variables:`);
@@ -235,6 +240,7 @@ app.listen(PORT, () => {
         console.log(`\n⚠️  To enable Deepgram AI conversations, set this environment variable:`);
         console.log(`   - DEEPGRAM_API_KEY`);
     }
+
 });
 
 export default app;

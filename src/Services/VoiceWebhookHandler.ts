@@ -229,7 +229,6 @@ export const handleSpeechInput = async (
         );
 
         const outOfContextCheck = checkIfOutOfContext(SpeechResult, getCallAgentPrompt(CallSid));
-        console.log(`Out of context check user input: ${JSON.stringify(outOfContextCheck)}`);
 
         const session = activeSessions.get(CallSid);
         if (!session) {

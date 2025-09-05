@@ -48,116 +48,116 @@ const initializeDeepgram = (): void => {
 // Initialize on module load
 initializeDeepgram();
 
-const agent = async () => {
-    let audioBuffer = Buffer.alloc(0);
-    let i = 0;
-    const url = "https://dpgr.am/spacewalk.wav";
-    const connection = deepgramClient.agent();
-    connection.on(AgentEvents.Welcome, () => {
-        console.log("Welcome to the Deepgram Voice Agent!");
+// const agent = async () => {
+//     let audioBuffer = Buffer.alloc(0);
+//     let i = 0;
+//     const url = "https://dpgr.am/spacewalk.wav";
+//     const connection = deepgramClient.agent();
+//     connection.on(AgentEvents.Welcome, () => {
+//         console.log("Welcome to the Deepgram Voice Agent!");
 
-        connection.configure({
-            audio: {
-                input: {
-                    encoding: "linear16",
-                    sample_rate: 24000,
-                },
-                output: {
-                    encoding: "linear16",
-                    sample_rate: 16000,
-                    container: "wav",
-                },
-            },
-            agent: {
-                language: "en",
-                listen: {
-                    provider: {
-                        type: "deepgram",
-                        model: "nova-3",
-                    },
-                },
-                think: {
-                    provider: {
-                        type: "open_ai",
-                        model: "gpt-4o-mini",
-                    },
-                    prompt: "You are a friendly AI assistant.",
-                },
-                speak: {
-                    provider: {
-                        type: "deepgram",
-                        model: "aura-2-thalia-en",
-                    },
-                },
-                greeting: "Hello! How can I help you today?",
-            },
-        });
+//         connection.configure({
+//             audio: {
+//                 input: {
+//                     encoding: "linear16",
+//                     sample_rate: 24000,
+//                 },
+//                 output: {
+//                     encoding: "linear16",
+//                     sample_rate: 16000,
+//                     container: "wav",
+//                 },
+//             },
+//             agent: {
+//                 language: "en",
+//                 listen: {
+//                     provider: {
+//                         type: "deepgram",
+//                         model: "nova-3",
+//                     },
+//                 },
+//                 think: {
+//                     provider: {
+//                         type: "open_ai",
+//                         model: "gpt-4o-mini",
+//                     },
+//                     prompt: "You are a friendly AI assistant.",
+//                 },
+//                 speak: {
+//                     provider: {
+//                         type: "deepgram",
+//                         model: "aura-2-thalia-en",
+//                     },
+//                 },
+//                 greeting: "Hello! How can I help you today?",
+//             },
+//         });
 
-        console.log("Deepgram agent configured!");
+//         console.log("Deepgram agent configured!");
 
-        setInterval(() => {
-            console.log("Keep alive!");
-            connection.keepAlive();
-        }, 5000);
+//         setInterval(() => {
+//             console.log("Keep alive!");
+//             connection.keepAlive();
+//         }, 5000);
 
-        fetch(url)
-            .then((r: any) => r.body)
-            .then((res: any) => {
-                res?.on("readable", () => {
-                    console.log("Sending audio chunk");
-                    connection.send(res.read());
-                });
-            });
-    });
+//         fetch(url)
+//             .then((r: any) => r.body)
+//             .then((res: any) => {
+//                 res?.on("readable", () => {
+//                     console.log("Sending audio chunk");
+//                     connection.send(res.read());
+//                 });
+//             });
+//     });
 
-    connection.on(AgentEvents.Open, () => {
-        console.log("Connection opened");
-    });
+//     connection.on(AgentEvents.Open, () => {
+//         console.log("Connection opened");
+//     });
 
-    connection.on(AgentEvents.Close, () => {
-        console.log("Connection closed");
-        process.exit(0);
-    });
+//     connection.on(AgentEvents.Close, () => {
+//         console.log("Connection closed");
+//         process.exit(0);
+//     });
 
-    connection.on(AgentEvents.ConversationText, async (data: any) => {
-        await appendFile(join(__dirname, `chatlog.txt`), JSON.stringify(data) + "\n");
-    });
+//     connection.on(AgentEvents.ConversationText, async (data: any) => {
+//         await appendFile(join(__dirname, `chatlog.txt`), JSON.stringify(data) + "\n");
+//     });
 
-    connection.on(AgentEvents.UserStartedSpeaking, () => {
-        if (audioBuffer.length) {
-            console.log("Interrupting agent.");
-            audioBuffer = Buffer.alloc(0);
-        }
-    });
+//     connection.on(AgentEvents.UserStartedSpeaking, () => {
+//         if (audioBuffer.length) {
+//             console.log("Interrupting agent.");
+//             audioBuffer = Buffer.alloc(0);
+//         }
+//     });
 
-    // connection.on(AgentEvents.Metadata, (data:any) => {
-    //     console.dir(data, { depth: null });
-    // });
+//     // connection.on(AgentEvents.Metadata, (data:any) => {
+//     //     console.dir(data, { depth: null });
+//     // });
 
-    connection.on(AgentEvents.Audio, (data: any) => {
-        console.log("Audio chunk received");
-        // Concatenate the audio chunks into a single buffer
-        const buffer = Buffer.from(data);
-        audioBuffer = Buffer.concat([audioBuffer, buffer]);
-    });
+//     connection.on(AgentEvents.Audio, (data: any) => {
+//         console.log("Audio chunk received");
+//         // Concatenate the audio chunks into a single buffer
+//         const buffer = Buffer.from(data);
+//         audioBuffer = Buffer.concat([audioBuffer, buffer]);
+//     });
 
-    connection.on(AgentEvents.Error, (err: any) => {
-        console.error("Error!");
-        console.error(JSON.stringify(err, null, 2));
-        console.error(err.message);
-    });
+//     connection.on(AgentEvents.Error, (err: any) => {
+//         console.error("Error!");
+//         console.error(JSON.stringify(err, null, 2));
+//         console.error(err.message);
+//     });
 
-    connection.on(AgentEvents.AgentAudioDone, async () => {
-        console.log("Agent audio done");
-        await writeFile(join(__dirname, `output-${i}.wav`), audioBuffer);
-        audioBuffer = Buffer.alloc(0);
-        i++;
-    });
+//     connection.on(AgentEvents.AgentAudioDone, async () => {
+//         console.log("Agent audio done");
+//         await writeFile(join(__dirname, `output-${i}.wav`), audioBuffer);
+//         audioBuffer = Buffer.alloc(0);
+//         i++;
+//     });
 
-    connection.on(AgentEvents.Unhandled, (data: any) => {
-        console.dir(data, { depth: null });
-    });
-};
+//     connection.on(AgentEvents.Unhandled, (data: any) => {
+//         console.dir(data, { depth: null });
+//     });
+// };
 
 // void agent();
 
